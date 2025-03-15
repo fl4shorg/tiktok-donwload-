@@ -1,38 +1,29 @@
 from flask import Flask, request, jsonify
-import yt_dlp
+from TikTokApi import TikTokApi
 
 app = Flask(__name__)
 
-def baixar_video(url):
-    ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
-        'outtmpl': 'video_tiktok.mp4',
-        'noplaylist': True,
-        'quiet': False,
-        'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',
-            'preferedformat': 'mp4',
-        }],
-        'writethumbnail': True,
-        'writeinfojson': True,
-        'merge_output_format': 'mp4',
-        'no_warnings': True,
-    }
+# Rota principal para verificar se a API está funcionando
+@app.route('/')
+def home():
+    return jsonify({"message": "API funcionando corretamente!"})
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
+# Rota para baixar o vídeo do TikTok
 @app.route('/baixar_video', methods=['GET'])
-def baixar_video_route():
-    url_video = request.args.get('url')
-    if not url_video:
-        return jsonify({'erro': 'URL do vídeo não fornecida'}), 400
+def baixar_video():
+    tiktok_url = request.args.get('url')  # Obtemos a URL do TikTok
+    if not tiktok_url:
+        return jsonify({"error": "URL não fornecida"}), 400
+    
+    api = TikTokApi.get_instance()
+    video = api.video(url=tiktok_url)  # Pega o vídeo pelo link
+    video_bytes = video.bytes(no_watermark=True)  # Baixa sem marca d'água
+    
+    # Salva o arquivo temporariamente
+    with open('video_sem_marca.mp4', 'wb') as f:
+        f.write(video_bytes)
+    
+    return jsonify({"message": "Vídeo baixado com sucesso!"}), 200
 
-    try:
-        baixar_video(url_video)
-        return jsonify({'mensagem': 'Download iniciado com sucesso'}), 200
-    except Exception as e:
-        return jsonify({'erro': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
