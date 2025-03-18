@@ -1,2 +1,7 @@
-Flask
-TikTokApi
+
+fastapi==0.103.1
+uvicorn==0.23.2
+httpx==0.24.1
+pydantic==2.3.0
+python-multipart==0.0.6
+beautifulsoup4==4.12.2
